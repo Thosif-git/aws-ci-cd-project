@@ -7,12 +7,12 @@ pipeline {
         KUBECONFIG = credentials('kubeconfig-aws')
     }
 
-    stage('Checkout Code') {
-    steps {
-        git branch: 'main', url: 'https://github.com/Thosif-git/aws-ci-cd-project.git'
-    }
-}
-
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Thosif-git/aws-ci-cd-project.git'
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
