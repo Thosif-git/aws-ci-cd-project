@@ -2,9 +2,8 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'us-east-1'
-        ECR_REPO = 'cicdpipeline'
-        KUBECONFIG = credentials('kubeconfig-aws')  // Corrected reference to credentials
+        AWS_REGION = "us-east-1"
+        ECR_REPO = "571600848518.dkr.ecr.us-east-1.amazonaws.com/cicdpipeline"
     }
 
     stages {
@@ -17,10 +16,7 @@ pipeline {
         stage('Login to AWS ECR') {
             steps {
                 script {
-                    sh """
-                        aws ecr get-login-password --region ${AWS_REGION} | \
-                        docker login --username AWS --password-stdin 571600848518.dkr.ecr.${AWS_REGION}.amazonaws.com
-                    """
+                    sh 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO'
                 }
             }
         }
@@ -28,17 +24,16 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def imageTag = "571600848518.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest"
-                    sh "docker build -t ${imageTag} ."
+                    sh 'docker build -t cicdpipeline:latest .'
                 }
             }
         }
 
-        stage('Push Image to ECR') {
+        stage('Tag and Push Image to ECR') {
             steps {
                 script {
-                    def imageTag = "571600848518.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:latest"
-                    sh "docker push ${imageTag}"
+                    sh 'docker tag cicdpipeline:latest $ECR_REPO:latest'
+                    sh 'docker push $ECR_REPO:latest'
                 }
             }
         }
@@ -46,11 +41,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    sh """
-                        export KUBECONFIG=${KUBECONFIG}
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
-                    """
+                    sh 'kubectl apply -f k8s/deployment.yaml'
                 }
             }
         }
